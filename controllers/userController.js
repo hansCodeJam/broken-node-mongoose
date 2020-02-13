@@ -8,9 +8,9 @@ module.exports = {
 
       //validate input
       if (
-        req.body.name.length === 0 ||
-        req.body.email.length === 0 ||
-        req.body.password.length === 0
+        name.length === 0 ||
+        email.length === 0 ||
+        password.length === 0
       ) {
         return res.json({ message: 'All fields must be completed' });
       }
@@ -23,8 +23,8 @@ module.exports = {
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync(req.body.password, salt);
 
-        newUser.name = req.body.name;
-        newUser.email = req.body.email;
+        newUser.name = name;
+        newUser.email = email;
         newUser.password = hash;
 
         newUser
@@ -42,13 +42,14 @@ module.exports = {
 
   login: (req, res) => {
     return new Promise((resolve, reject) => {
-      findOne({ email: req.body.email })
+      User.findOne({ email: req.body.email })
         .then(user => {
+          if(user ===null) return res.status(200).json({message:'Incorrect credentials'})
           bcrypt
             .compare(req.body.password, user.password)
             .then(user => {
               return res.send(
-                user === true
+                user 
                   ? 'You are now logged in'
                   : 'Incorrect credentials'
               );
@@ -65,9 +66,9 @@ module.exports = {
       User.findById({ _id: req.params.id })
         .then(user => {
           const { name, email } = req.body;
-
-          user.name = req.body.name ? req.body.name : user.name;
-          user.email = req.body.email ? req.body.email : user.email;
+          if(!name && !email) return res.status(200).json({ message: 'No changes were made'})
+          user.name = name ? name : user.name;
+          user.email = email ? email : user.email;
 
           user
             .save()
